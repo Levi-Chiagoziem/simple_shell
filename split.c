@@ -1,7 +1,7 @@
 #include "main.h"
 
 /**
- * split_string - function that splits the strings into tokens 
+ * split_string - function that splits the strings into tokens
  * @string: paramter that stores the string
  * @delimiter: parameter that stores the delimiter
  * Return: returns NULL if unsuccessful and  pointer to a char if successful
@@ -44,5 +44,3 @@ char **split_string(char *string, char *delimiter)
 	token_array[i] = NULL;
 	return (token_array);
 }
-
-
