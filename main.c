@@ -1,134 +1,74 @@
 #include "shell.h"
 
-void sig_handler(int sig);
-int execute(char **args, char **front);
-
 /**
- * sig_handler - Prints a new prompt upon a signal.
- * @sig: The signal.
+ * interactive - returns true if shell is interactive mode
+ * @info: struct address
+ *
+ * Return: 1 if interactive mode, 0 otherwise
  */
-void sig_handler(int sig)
+int interactive(info_t *info)
 {
-	char *new_prompt = "\n$ ";
-
-	(void)sig;
-	signal(SIGINT, sig_handler);
-	write(STDIN_FILENO, new_prompt, 3);
+	return (isatty(STDIN_FILENO) && info->readfd <= 2);
 }
 
 /**
- * execute - Executes a command in a child process.
- * @args: An array of arguments.
- * @front: A double pointer to the beginning of args.
- *
- * Return: If an error occurs - a corresponding error code.
- *         O/w - The exit value of the last executed command.
+ * is_delim - checks if character is a delimeter
+ * @c: the char to check
+ * @delim: the delimeter string
+ * Return: 1 if true, 0 if false
  */
-int execute(char **args, char **front)
+int is_delim(char c, char *delim)
 {
-	pid_t child_pid;
-	int status, flag = 0, ret = 0;
-	char *command = args[0];
-
-	if (command[0] != '/' && command[0] != '.')
-	{
-		flag = 1;
-		command = get_location(command);
-	}
-
-	if (!command || (access(command, F_OK) == -1))
-	{
-		if (errno == EACCES)
-			ret = (create_error(args, 126));
-		else
-			ret = (create_error(args, 127));
-	}
-	else
-	{
-		child_pid = fork();
-		if (child_pid == -1)
-		{
-			if (flag)
-				free(command);
-			perror("Error child:");
+	while (*delim)
+		if (*delim++ == c)
 			return (1);
-		}
-		if (child_pid == 0)
-		{
-			execve(command, args, environ);
-			if (errno == EACCES)
-				ret = (create_error(args, 126));
-			free_env();
-			free_args(args, front);
-			free_alias_list(aliases);
-			_exit(ret);
-		}
-		else
-		{
-			wait(&status);
-			ret = WEXITSTATUS(status);
-		}
-	}
-	if (flag)
-		free(command);
-	return (ret);
+	return (0);
 }
 
 /**
- * main - Runs a simple UNIX command interpreter.
- * @argc: The number of arguments supplied to the program.
- * @argv: An array of pointers to the arguments.
- *
- * Return: The return value of the last executed command.
+ *_isalpha - checks for alphabetic character
+ *@c: The character to input
+ *Return: 1 if c is alphabetic, 0 otherwise
  */
-int main(int argc, char *argv[])
+
+int _isalpha(int c)
 {
-	int ret = 0, retn;
-	int *exe_ret = &retn;
-	char *prompt = "$ ", *new_line = "\n";
+	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+		return (1);
+	else
+		return (0);
+}
 
-	name = argv[0];
-	hist = 1;
-	aliases = NULL;
-	signal(SIGINT, sig_handler);
+/**
+ *_atoi - converts a string to an integer
+ *@s: the string to be converted
+ *Return: 0 if no numbers in string, converted number otherwise
+ */
 
-	*exe_ret = 0;
-	environ = _copyenv();
-	if (!environ)
-		exit(-100);
+int _atoi(char *s)
+{
+	int i, sign = 1, flag = 0, output;
+	unsigned int result = 0;
 
-	if (argc != 1)
+	for (i = 0;  s[i] != '\0' && flag != 2; i++)
 	{
-		ret = proc_file_commands(argv[1], exe_ret);
-		free_env();
-		free_alias_list(aliases);
-		return (*exe_ret);
-	}
+		if (s[i] == '-')
+			sign *= -1;
 
-	if (!isatty(STDIN_FILENO))
-	{
-		while (ret != END_OF_FILE && ret != EXIT)
-			ret = handle_args(exe_ret);
-		free_env();
-		free_alias_list(aliases);
-		return (*exe_ret);
-	}
-
-	while (1)
-	{
-		write(STDOUT_FILENO, prompt, 2);
-		ret = handle_args(exe_ret);
-		if (ret == END_OF_FILE || ret == EXIT)
+		if (s[i] >= '0' && s[i] <= '9')
 		{
-			if (ret == END_OF_FILE)
-				write(STDOUT_FILENO, new_line, 1);
-			free_env();
-			free_alias_list(aliases);
-			exit(*exe_ret);
+			flag = 1;
+			result *= 10;
+			result += (s[i] - '0');
 		}
+		else if (flag == 1)
+			flag = 2;
 	}
 
-	free_env();
-	free_alias_list(aliases);
-	return (*exe_ret);
+	if (sign == -1)
+		output = -result;
+	else
+		output = result;
+
+	return (output);
 }
