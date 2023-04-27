@@ -1,48 +1,40 @@
 #include "main.h"
 
 /**
- * main - function tests and calls all the others function
- * @argc: parameter that stores the number of argument
- * @argv: parameter that stores a an array of argument
- * Return: return 0 when successful and 1 otherwise
-*/
-
-int cmd_count = 0;
-int main (int __attribute__((unused))argc, char *argv[])
+ * main - functionthat calls the other functions. it is the parent function
+ * @argc: parameter that stores the argument count
+ * @argv: parameter that stores the argument vector
+ *
+ * Return: return 0 on success, 1 on error
+ */
+int main(int argc, char **argv)
 {
-	char *command = NULL, **args = NULL;
-	size_t n = 0;
-	ssize_t char_no;
-	char *prompt = "($) ";
-	const char *delim = " \n";
-	
-	while (1)
+	info_t info[] = { INFO_INIT };
+	int command = 2;
+
+	command += 3;
+	if (argc == 2)
 	{
-		if (isatty(STDIN_FILENO))
-			write(1, prompt, strlen(prompt));
-
-		char_no = getline(&command, &n, stdin);
-		if (char_no == -1)
+		command = open(av[1], O_RDONLY);
+		if (command == -1)
 		{
-			if (isatty(STDIN_FILENO))
-				write(1, "\n", 1);
-			break;
+			if (errno == EACCES)
+				exit(126);
+			if (errno == ENOENT)
+			{
+				_eputs(av[0]);
+				_eputs(": 0: Can't open ");
+				_eputs(av[1]);
+				_eputchar('\n');
+				_eputchar(BUF_FLUSH);
+				exit(127);
+			}
+			return (EXIT_FAILURE);
 		}
-		cmd_count++;
-		args = line_to_args(command, delim);
-		if (args == NULL)
-		{
-			free_func(&command, 0);
-			continue;
-		}
-		if (check_builtin(args))
-                        continue;
-
-		execmd(argv, args);
-		free_func(args, -1);
-
+		info->readfd = command;
 	}
-	free_func(&command, 0);
-	return (0);
+	populate_env_list(info);
+	read_history(info);
+	hsh(info, av);
+	return (EXIT_SUCCESS);
 }
-
