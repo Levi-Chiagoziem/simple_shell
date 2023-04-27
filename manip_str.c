@@ -1,71 +1,30 @@
 #include "main.h"
 
-/**
-  * tokens_to_arr - This function creates an array of strings from tokens
-  * @command_copy: This holds a copy of string to be tokenized
-  * @num_tokens: The number of tokens present in the string.
-  * @delim: The delimiter to be used.
-  * Return: Pointer to Pointer of strings or NULL.
+/*
+ * digTostr - function that convert number to a string
+ * @num: Number
+ *
+ * Return: String of number
  */
-
-char **tokens_to_arr (char *command_copy, int num_tokens, const char *delim)
+char *digTostr(long num)
 {
-	char **args = NULL, *token = NULL;
-	int i = 0;
+	int lenStr = num < 0 ? 1 : 0;
+	char *str;
 
-	args = malloc(sizeof(char *) * (num_tokens + 1)); 
-	if (args == NULL)
-	{
-		free_func(&command_copy, 0);
-		perror("Error: line_to_args1");
+	lenStr += (count_digits(num, 10));
+
+	str = malloc(sizeof(*str) * (lenStr + 1));
+	if (!str)
 		return (NULL);
-	}
 
-	token = strtok(command_copy, delim);
-	for (i = 0; token != NULL; i++)
+	str[lenStr--] = '\0';
+	str[0] = num >= 0 ? '0' : '-';
+	num = num >= 0 ? num : -(num);
+
+	while (num)
 	{
-		args[i] = malloc(sizeof(char) * (strlen(token) + 1));
-		if (args[i] == NULL)
-		{
-			free_func(&command_copy, 0);
-			free_func(args, i);
-			perror("Error: line_to_args2");
-			return (NULL);
-		}
-
-		strcpy(args[i], token);
-		token = strtok(NULL, delim);
+		str[lenStr--] = (num % 10) + '0';
+		num /= 10;
 	}
-	args[num_tokens] = NULL;
-	return (args);
-}
-
-char **line_to_args(char *command, const char *delim)
-{
-	char *command_copy = NULL, *token = NULL, **args = NULL;
-	int num_tokens = 0;
-
-	command_copy = strdup(command);
-	if (command_copy == NULL)
-	{
-		perror("Error: line_to_args");
-		return (NULL);
-	}
-
-	token = strtok(command, delim);
-	if (token == NULL)
-	{
-		free_func(&command_copy, 0);
-		return (NULL);
-	}
-
-	while (token)
-	{
-		num_tokens++;
-		token = strtok(NULL, delim);
-	}
-	
-	args = tokens_to_arr(command_copy, num_tokens, delim);
-	free_func(&command_copy, 0);
-	return (args);
+	return (str);
 }

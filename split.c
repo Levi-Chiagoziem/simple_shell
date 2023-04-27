@@ -1,52 +1,50 @@
 #include "main.h"
 
+/**
+  *split_string -  function that splits the path and append a slash at each end
+  *@str: parametr tring to split.
+  *@delim: paremeter that stores the delimiter
+  *Return: Pointer to Array of NULL-terminated strings
+  */
+
 char **split_string(char *str, char *delim)
 {
-	char *str_copy, **pp, *token;
+	char *str_copy, **path_token, *token;
 	int i, num_tokens = 0;
 
-	str_copy = strdup(str);
-	if (!str_copy)
-	{
-		perror("split_string function");
+	str_copy = _strdup(str);
+	if (str_copy == NULL)
 		return (NULL);
-	}
-	token = strtok(str_copy, delim);
-
+	token = _strtok(str_copy, delim);
 	while (token != NULL)
 	{
 		num_tokens++;
-		token = strtok(NULL, delim);
+		token = _strtok(NULL, delim);
 	}
-
-	pp = malloc(sizeof(char *) * (num_tokens + 1));
-	if (!pp)
+	path_token = malloc(sizeof(char *) * (num_tokens + 1));
+	if (path_token == NULL)
 	{
 		free_func(&str_copy, 0);
-		perror("split_string function");
+		perror("Error: split_string function");
 		return (NULL);
 	}
-
-	strcpy(str_copy, str);
-	token = strtok(str_copy, delim);
-
+	_strcpy(str_copy, str);
+	token = _strtok(str_copy, delim);
 	for (i = 0; token != NULL; i++)
 	{
-		pp[i] = malloc(sizeof(char) * strlen(token) + 2);
-
-		if (!pp[i])
+		path_token[i] = malloc(sizeof(char) * _strlen(token) + 2);
+		if (!path_token[i])
 		{
-			free_func(pp, i);
+			free_func(path_token, i);
 			free_func(&str_copy, 0);
-			perror("split_string function");
+			perror("Erroe: split_string function");
 			return (NULL);
 		}
-		strcpy(pp[i], token);
-		strcat(pp[i], "/");
-
-		token = strtok(NULL, delim);
+		_strcpy(path_token[i], token);
+		_strcat(path_token[i], "/");
+		token = _strtok(NULL, delim);
 	}
-	pp[i] = NULL;
+	path_token[i] = NULL;
 	free_func(&str_copy, 0);
-	return (pp);
+	return (path_token);
 }
