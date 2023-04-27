@@ -1,172 +1,66 @@
-#include "main.h"
+#include <main.h>
+
 /**
- * exit-shell - Exit shell. Status default zero
- * @args: arguments
- *
- * Return: 1
+ * _myhelp - changes the current directory of the process
+ * @info: parameter that containing potential arguments
+ *  Return: return 0 when successful
  */
-int exit_shell(char **args,
-		char __attribute__((unused))**env)
+int _myhelp(info_t *info)
 {
-	int id = getpid();
-	int status = 0;
+	char **arg_array;
 
-	if (args[1])
-		status = atoi(args[1]);
-
-	if (id != 0)
-		exit(status);
-	return (1);
+	arg_array = info->argv;
+	_puts("the help call function  works. not fully though\n");
+	if (0)
+		_puts(*arg_array);
+	return (0);
 }
 
 /**
- * print_env - Prints environment variables
- * @args: arguments
- * @env: enviroment variables
- *
- * Return: 1
+ * _mycd - function that changes the current directory of the process
+ * @info: paremter that  containing potential arguments. Used to maintain
+ *          constant function prototype.
+ *  Return: Always 0
  */
-int print_env(char __attribute__((unused))**args,
-		char __attribute__((unused))**env)
+int _mycd(info_t *info)
 {
-	static Node *head, *tmp;
-	head = getenv_list();
-	
-	tmp = head;
-	while(tmp->next)
-	{
-		print_node(tmp);
-		write(1, "\n", 1);
-		tmp = tmp->next;
-	}
-	print_node(tmp);
-	write(1, "\n", 1);
-	return (1);
-}
+	char *s, *directory;
+	char buffer[1024];
+	int chdir_ret;
 
-void print_node(Node *ptr)
-{
-	write(1, ptr->name, strlen(ptr->name));
-	write(1, "=", 1);
-	write(1, ptr->value, strlen(ptr->value));
-}
-
-int set_env(char **args, char __attribute__((unused))**environ)
-{
-	Node *head = getenv_list(), *tmp, *tmp1;
-
-	if (!args[1])
+	s = getcwd(buffer, 1024);
+	if (s == NULL)
+		_puts("TODO: >>getcwd failed\n");
+	if (!info->argv[1])
 	{
-		perror("No VARIABLE passed");
-		return (-1);
+		directory = _getenv(info, "HOME=");
+		if (directory == NULL)
+			chdir_ret = chdir((directory = _getenv(info, "PWD=")) ? directory : "/");
+		else
+			chdir_ret = chdir(directory);
 	}
-	if (!args[2])
+	else if (_strcmp(info->argv[1], "-") == 0)
 	{
-		perror("No VALUE passed");
-		return (-1);
-	}
-	if (args[1] && args[2])
-	{
-		tmp = head;
-		while (tmp->next)
+		if (!_getenv(info, "OLDPWD="))
 		{
-			if (strcmp(tmp->name, args[1]) == 0)
-			{
-				tmp->value = strdup(args[2]);
-				break;
-			}
-			tmp = tmp->next;
+			_puts(s);
+			_putchar('\n');
+			return (1);
 		}
-		if (!tmp->next)
-		{
-			tmp1 = malloc(sizeof(Node));
-			tmp1->name = strdup(args[1]);
-			tmp1->value = strdup(args[2]);
-			tmp1->next = NULL;
-			tmp->next = tmp1;
-		}
+		_puts(_getenv(info, "OLDPWD=")), _putchar('\n');
+		chdir_ret = chdir((directory = _getenv(info, "OLDPWD=")) ? directory : "/");
 	}
-        return (1);	
-}
-
-Node *getenv_list(void)
-{
-	extern char **environ;
-	char *env, *name, *value;
-        static Node *head;
-        Node *tmp = NULL, *tmp1 = NULL;
-	int i, j, len;
-
-	if (!head)
+	else
+		chdir_ret = chdir(info->argv[1]);
+	if (chdir_ret == -1)
 	{
-		for(i = 0; environ[i]; i++)
-		{
-			len = 0;
-			env = environ[i];
-			for (j = 0; env[j] != '='; j++)
-			{
-				len++;
-			}
-			name = malloc(sizeof(char) * (len + 1));
-			value = env + j + 1;
-			strncat(name, env, len);
-			tmp = malloc(sizeof(Node));
-			tmp->name = strdup(name);
-			tmp->value = strdup(value);
-			tmp->next = NULL;
-			if (!head)
-				head = tmp;
-			else
-			{
-				tmp1 = head;
-				while(tmp1->next)
-				{
-					tmp1 = tmp1->next;
-				}
-				tmp1->next = tmp;
-			}
-		}
+		print_error(info, "can't cd into ");
+		_eputs(info->argv[1]), _eputchar('\n');
 	}
-        return (head);
-}
-int unset_env(char **args, char __attribute__((unused))**env)
-{
-	Node *head = getenv_list(), *next, *curr;
-	int i;
-
-	curr = head;
-	for (i = 0; args[i]; i++)
-		i++;
-	if (i > 2)
+	else
 	{
-		perror("Too many Arguments");
-		return (-1);
+		_setenv(info, "OLDPWD", _getenv(info, "PWD="));
+		_setenv(info, "PWD", getcwd(buffer, 1024));
 	}
-	while (curr->next)
-	{
-		next = curr->next;
-		if (strcmp(next->name, args[1]) == 0)
-		{
-			curr->next = NULL;
-			curr->next = next->next;
-			free_node(next);
-			break;
-		}
-		curr = curr->next;
-	}
-	if (!curr->next)
-	{
-		perror("Env not found");
-		return (-1);
-	}
-	return (1);
+	return (0);
 }
-
-
-void free_node(Node *ptr)
-{
-	free(ptr->name);
-	free(ptr->value);
-	free(ptr);
-}
-
